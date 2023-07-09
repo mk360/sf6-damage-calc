@@ -10,7 +10,7 @@ class Move {
     previousMove: Move | null;
     damage: number | DamageLevels;
     nextMove: Move | null;
-    constructor(input: string, type: MoveType, damage: number | { light: number; medium: number; heavy: number; overdrive: number }) {
+    constructor(input: string, type: MoveType, damage: number | DamageLevels) {
         this.input = input;
         this.damage = damage;
         this.type = type; 

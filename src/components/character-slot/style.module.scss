@@ -1,0 +1,15 @@
+@import "../../theme.scss";
+
+.character-selector {
+    @include Font;
+    font-size: 30px;
+    flex: 1;
+    background-color: black;
+    padding: 8px;
+    display: block;
+
+    &:hover {
+        color: $orange;
+        text-decoration: none;
+    }
+}
