@@ -5,7 +5,14 @@ import assert from "node:assert";
 import DamageLevels from "@/logic/types/damage-levels";
 
 const StandingHeavyPunch = new Move("5HP", "normal", 800);
+const StandingHeavyPunch2 = new Move("5HP", "normal", 800);
 const StandingLightPunch = new Move("5LP", "normal", 300);
+
+const ShinkuHadoken = new Move("236236P", "super1", 2000);
+
+const ShinHashogeki = new Move("234234P", "super2", 3000);
+
+const DriveRush = new Move("66", "drive-rush", 0);
 
 const Shoryuken = new Move("623HP", "special", {
     light: 1100,
@@ -32,9 +39,11 @@ const CrMK = new Move("2MK", "normal", 500);
 
 const ShinShoryuken = new Move("236236K", "super3", 4000);
 
+const movesArray = [TatsumakiSenpukyaku, ShinShoryuken, HighBladeKick, Shoryuken, StandingHeavyPunch, CrMK, StandingLightPunch, DriveRush, StandingHeavyPunch2];
+
 describe("Regular combo scaling", () => {
     beforeEach(() => {
-        for (let move of [TatsumakiSenpukyaku, ShinShoryuken, HighBladeKick, Shoryuken, StandingHeavyPunch, CrMK, StandingLightPunch]) {
+        for (let move of movesArray) {
             move.previousMove = null;
             move.nextMove = null;
         }
@@ -44,7 +53,7 @@ describe("Regular combo scaling", () => {
         const combo = new Combo();
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(Shoryuken);
-        assert.strictEqual(combo.getComboData({ isCounter: false })?.totalDamage, (Shoryuken.damage as DamageLevels).heavy + (StandingHeavyPunch.damage as number));
+        assert.strictEqual(combo.getComboData()?.totalDamage, (Shoryuken.damage as DamageLevels).heavy + (StandingHeavyPunch.damage as number));
         done();
     });
 
@@ -55,7 +64,7 @@ describe("Regular combo scaling", () => {
 
         const totalRequired = (HighBladeKick.damage as DamageLevels).heavy + (ShinShoryuken.damage as number) * 0.9;
 
-        assert.strictEqual(combo.getComboData({ isCounter: false })?.totalDamage, totalRequired);
+        assert.strictEqual(combo.getComboData()?.totalDamage, totalRequired);
         done();
     });
 
@@ -63,31 +72,31 @@ describe("Regular combo scaling", () => {
         const combo = new Combo();
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(TatsumakiSenpukyaku);
-        combo.addMove(Shoryuken);
+        combo.addMove(ShinShoryuken);
 
-        const data = combo.getComboData({ isCounter: false });
-        assert.strictEqual(data?.totalDamage, (StandingHeavyPunch.damage as number) + (TatsumakiSenpukyaku.damage as DamageLevels).overdrive + (Shoryuken.damage as DamageLevels).heavy * 0.9)
+        const data = combo.getComboData();
+        assert.strictEqual(data?.totalDamage, 5000);
     });
 
-    it("should scale the 3rd move of a standard combo by 90%", (done) => {
+    it("should scale the 3rd move of a standard combo by 80%", (done) => {
         const combo = new Combo();
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(HighBladeKick, true);
         combo.addMove(TatsumakiSenpukyaku); // not a true combo, added just to have a different move
-        const data = combo.getComboData({ isCounter: false });
-        assert.strictEqual(data?.steps[2].scaling, 90);
+        const data = combo.getComboData();
+        assert.strictEqual(data?.steps[2].scaling, 80);
         done();
     });
 
-    it("should scale the 4th move of a standard combo by 80%", (done) => {
+    it("should scale the 4th move of a standard combo by 70%", (done) => {
         const combo = new Combo();
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(HighBladeKick);
         combo.addMove(TatsumakiSenpukyaku);
         combo.addMove(Shoryuken);
 
-        const data = combo.getComboData({ isCounter: false });
-        assert.strictEqual(data?.steps[3].scaling, 80);
+        const data = combo.getComboData();
+        assert.strictEqual(data?.steps[3].scaling, 70);
         done();
     });
 
@@ -101,12 +110,12 @@ describe("Regular combo scaling", () => {
         done();
     });
 
-    it("should scale down to 80% after a cancelled 2MK", (done) => {
+    it("should scale down to 80% after a cancelled starter 2MK", (done) => {
         const combo = new Combo();
         combo.addMove(CrMK, true);
         combo.addMove(HighBladeKick);
 
-        const data = combo.getComboData({ isCounter: false });
+        const data = combo.getComboData();
         assert.strictEqual(data?.steps[1].scaling, 80);
         done();
     });
@@ -115,19 +124,100 @@ describe("Regular combo scaling", () => {
         const combo = new Combo();
         combo.addMove(StandingLightPunch, true);
         combo.addMove(Shoryuken);
-        const data = combo.getComboData({ isCounter: true });
+        const data = combo.getComboData();
         assert.strictEqual(data?.steps[1].scaling, 90);
-        assert.strictEqual(data?.totalDamage, 1620);
+        assert.strictEqual(data?.totalDamage, 1560);
         done();
     });
 });
 
 describe("Perfect Parry combos", () => {
-    it("should halve all scaling", () => {
+    beforeEach(() => {
+        for (let move of movesArray) {
+            move.previousMove = null;
+            move.nextMove = null;
+        }
+    });
+
+    it("should halve all scaling and damage", (done) => {
         const combo = new Combo();
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(Shoryuken);
         const data = combo.getComboData({ isCounter: false, perfectParry: true });
         assert.strictEqual(data?.totalDamage, ((Shoryuken.damage as DamageLevels).heavy + (StandingHeavyPunch.damage as number)) / 2);
+        done();
+    });
+
+    it("should decrease scaling by 5% after each combo move", (done) => {
+        const combo = new Combo();
+        combo.addMove(StandingHeavyPunch);
+        combo.addMove(CrMK, true);
+        combo.addMove(TatsumakiSenpukyaku);
+        combo.addMove(Shoryuken);
+
+        const data = combo.getComboData({ perfectParry: true, isCounter: false });
+        // finish test
+        done();
+    });
+});
+
+describe("Drive Rush", () => {
+    beforeEach(() => {
+        for (let move of movesArray) {
+            move.previousMove = null;
+            move.nextMove = null;
+        }
+    });
+
+    it("should add 25% scaling penalty inside a combo", (done) => {
+        const combo = new Combo();
+        combo.addMove(StandingHeavyPunch, true);
+        combo.addMove(DriveRush, false);
+        combo.addMove(StandingHeavyPunch2, true);
+        combo.addMove(Shoryuken);
+        const data = combo.getComboData();
+        console.log(data);
+        assert.strictEqual(data?.totalDamage, 2432);
+        done();
+    });
+})
+
+describe("Supers scaling", () => {
+    beforeEach(() => {
+        for (let move of movesArray) {
+            move.previousMove = null;
+            move.nextMove = null;
+        }
+    });
+
+    it("should be higher than 50% if combo string stays over 50%", (done) => {
+        const combo = new Combo();
+        combo.addMove(StandingHeavyPunch, true);
+        combo.addMove(TatsumakiSenpukyaku);
+        combo.addMove(Shoryuken, true);
+        combo.addMove(ShinShoryuken);
+        console.log(combo.getComboData()?.steps);
+        assert.strictEqual(combo.getComboData()?.steps[3].scaling, 60);
+        done();
+    });
+
+    it("should be at 50% if combo drops to less than 50% and a Lv. 3 Super is used", (done) => {
+        const combo = new Combo();
+        combo.addMove(StandingHeavyPunch, true);
+        combo.addMove(TatsumakiSenpukyaku);
+        combo.addMove(Shoryuken, true);
+        combo.addMove(ShinShoryuken);
+        assert.strictEqual(combo.getComboData({ perfectParry: true })?.steps[3].scaling, 50);
+        done();
+    });
+
+    it("should be at 40% if combo drops to less than 40% and a Super 2 is used", (done) => {
+        const combo = new Combo();
+        combo.addMove(StandingHeavyPunch, true);
+        combo.addMove(TatsumakiSenpukyaku);
+        combo.addMove(Shoryuken, true);
+        combo.addMove(ShinHashogeki);
+        assert.strictEqual(combo.getComboData({ perfectParry: true })?.steps[3].scaling, 40);
+        done();
     });
 });

@@ -1,6 +1,8 @@
 import DamageLevels from "./types/damage-levels";
 import MoveType from "./types/move-type";
 
+// improvement: find a way to allow multiple similar moves in a combo without them referencing the same object in memory
+
 class Move {
     input: string;
     type: MoveType;

@@ -9,6 +9,12 @@ interface ComboStep {
     scaling: number;
 }
 
+const generalScaling = [100, 100, 80, 70, 60, 50, 40, 30, 20, 10];
+const lightNormalScaling = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10];
+const crMkScaling = [100, 80, 70, 60, 50, 40, 30, 20, 10, 10];
+
+// improvement: the combo engine should not select the move's version; the move itself should determine its own damage output and pass it to the combo.
+
 class Combo {
     starter: Move | null;
     ender: Move | null;
@@ -38,6 +44,7 @@ class Combo {
         }
         else if (this.ender) {
             this.ender.nextMove = move;
+            move.previousMove = this.ender;
             this.ender = move;
         }
     }
@@ -47,46 +54,61 @@ class Combo {
         return match === "M" ? "medium" : match === "L" ? "light" : match === "H" ? "heavy" : "any";
     }
 
-    getComboData(settings: Partial<ScalingCapSettings> & { isCounter: boolean }) {
-        const { isCounter } = settings;
+    getTrueMovePercentage(basePercentage: number, moveType: MoveType, cap: number) {
+        if (basePercentage < 50 && moveType === "super3") return 50;
+        if (basePercentage < 40 && moveType === "super2") return 40;
+        if (basePercentage < 30 && moveType === "super1") return 30;
+        return Math.max(0.1 * cap, basePercentage);
+    }
+
+    getComboData(settings?: Partial<ScalingCapSettings> & Partial<{ isCounter: boolean }>) {
         let totalDamage = 0;
         let currentMove = this.starter;
-        let comboMoveOrder = 1;
-
-        const cap = this.getScalingCap(settings.perfectParry!, 0);
+        let comboHits = 1;
+        const usedScaling = this.getMoveStrength(this.starter?.input!) === "light" && this.starter?.grounded ? lightNormalScaling : this.starter?.input === "2MK" && this.starter.cancelled ? crMkScaling : generalScaling;
+        
+        const cap = this.getScalingCap(settings?.perfectParry!, 0);
+        let scalingPenalty = 0;
+        let driveRushPenaltyAdded = false;
+        let comboScale = cap;
     
         while (currentMove) {
-            const appliedScaling = this.getScalingFromOrder(comboMoveOrder, currentMove.type, cap);
+            if (currentMove.type === "drive-rush" && !driveRushPenaltyAdded && currentMove.previousMove?.cancelled) {
+                scalingPenalty += 15;
+                driveRushPenaltyAdded = true;
+                if (currentMove.nextMove) {
+                    currentMove = currentMove.nextMove;
+                }
+                continue;
+            }
             let moveDamage = this.getBaseMoveDamage(currentMove);
-            const starterIsCounter = comboMoveOrder === 1 && isCounter;
-            let moveDamageWithCounter = moveDamage * (starterIsCounter ? 1.2 : 1);
-            const isLightStarter = comboMoveOrder === 1 && this.getMoveStrength(currentMove.input) === "light" && currentMove.grounded;
-            const is2MKStarter = comboMoveOrder === 1 && currentMove.input === "2MK" && currentMove.cancelled;
-            let trueMoveDamage = Math.floor(moveDamageWithCounter * appliedScaling / 100);
+            if (comboHits === 1 && settings?.isCounter) moveDamage *= 1.2;
+            debugger;
+            const moveOrderScale = this.getScalingFromOrder(comboHits, cap, usedScaling);
+            const scaledPercentage = moveOrderScale * (cap - scalingPenalty) / cap;
+            
+            const trueMovePercentage = this.getTrueMovePercentage(scaledPercentage, currentMove.type, cap);
+            const trueMoveDamage = Math.floor(moveDamage * trueMovePercentage / 100);
 
-            const comboStep: ComboStep = {
-                move: currentMove.input,
-                unscaledDamage: moveDamageWithCounter,
+            this.comboSteps.push({
                 damage: trueMoveDamage,
-                scaling: appliedScaling,
-            };
-
-            this.comboSteps.push(comboStep);
+                unscaledDamage: moveDamage,
+                scaling: trueMovePercentage,
+                move: currentMove.input
+            });
 
             totalDamage += trueMoveDamage;
-            if (currentMove.type === "special" && currentMove.nextMove?.type === "super3" && currentMove.cancelled) {
-                comboMoveOrder++;
+
+            if (currentMove.cancelled && currentMove.type === "special" && currentMove.nextMove?.type === "super3") {
+                if (comboHits === 1) {
+                    scalingPenalty += 10;
+                } else {
+                    comboHits++;
+                }
             }
-            if (isLightStarter) {
-                comboMoveOrder++
-            }
-            if (is2MKStarter) {
-                comboMoveOrder += 2;
-            }
-            if (currentMove.type === "target-combo") {
-                comboMoveOrder += currentMove.hits!;
-            }
-            comboMoveOrder++;
+
+            comboHits++;
+
             if (currentMove.nextMove) {
                 currentMove = currentMove.nextMove;
             }
@@ -104,13 +126,8 @@ class Combo {
         return Math.floor(scaling);
     }
 
-    getScalingFromOrder(order: number, moveType: MoveType, scalingCap: number) {
-        if (order <= 2) return scalingCap;
-        if (order >= 10) return 10;
-        const manualScaling = scalingCap - ((order - 2)  * (scalingCap / 10));
-        if (moveType === "super3") return Math.max(50, manualScaling);
-        if (moveType === "super2") return Math.max(30, manualScaling);
-        if (moveType === "super1") return Math.max(20, manualScaling);
+    getScalingFromOrder(order: number, scalingCap: number, usedScaling: number[]) {
+        const manualScaling = (usedScaling[order - 1] ?? 10) * (scalingCap / 100);
         return Math.max(10, manualScaling);
     }
 
