@@ -70,12 +70,19 @@ class Combo {
         const cap = this.getScalingCap(settings?.perfectParry!, 0);
         let scalingPenalty = 0;
         let driveRushPenaltyAdded = false;
-        let comboScale = cap;
     
         while (currentMove) {
-            if (currentMove.type === "drive-rush" && !driveRushPenaltyAdded && currentMove.previousMove?.cancelled) {
-                scalingPenalty += 15;
-                driveRushPenaltyAdded = true;
+            if (currentMove.type === "drive-rush" && currentMove.previousMove?.cancelled) {
+                if (!driveRushPenaltyAdded) {
+                    scalingPenalty += 0.15 * cap;
+                    driveRushPenaltyAdded = true;
+                }
+                this.comboSteps.push({
+                    damage: 0,
+                    unscaledDamage: 0,
+                    scaling: 0,
+                    move: currentMove.input
+                });
                 if (currentMove.nextMove) {
                     currentMove = currentMove.nextMove;
                 }
@@ -87,7 +94,7 @@ class Combo {
             const moveOrderScale = this.getScalingFromOrder(comboHits, cap, usedScaling);
             const scaledPercentage = moveOrderScale * (cap - scalingPenalty) / cap;
             
-            const trueMovePercentage = this.getTrueMovePercentage(scaledPercentage, currentMove.type, cap);
+            const trueMovePercentage = Math.floor(this.getTrueMovePercentage(scaledPercentage, currentMove.type, cap));
             const trueMoveDamage = Math.floor(moveDamage * trueMovePercentage / 100);
 
             this.comboSteps.push({
@@ -101,7 +108,7 @@ class Combo {
 
             if (currentMove.cancelled && currentMove.type === "special" && currentMove.nextMove?.type === "super3") {
                 if (comboHits === 1) {
-                    scalingPenalty += 10;
+                    scalingPenalty += 0.1 * cap;
                 } else {
                     comboHits++;
                 }

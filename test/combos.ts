@@ -13,6 +13,7 @@ const ShinkuHadoken = new Move("236236P", "super1", 2000);
 const ShinHashogeki = new Move("234234P", "super2", 3000);
 
 const DriveRush = new Move("66", "drive-rush", 0);
+const DriveRush2 = new Move("66", "drive-rush", 0);
 
 const Shoryuken = new Move("623HP", "special", {
     light: 1100,
@@ -39,7 +40,7 @@ const CrMK = new Move("2MK", "normal", 500);
 
 const ShinShoryuken = new Move("236236K", "super3", 4000);
 
-const movesArray = [TatsumakiSenpukyaku, ShinShoryuken, HighBladeKick, Shoryuken, StandingHeavyPunch, CrMK, StandingLightPunch, DriveRush, StandingHeavyPunch2];
+const movesArray = [TatsumakiSenpukyaku, ShinkuHadoken, ShinShoryuken, HighBladeKick, Shoryuken, StandingHeavyPunch, CrMK, StandingLightPunch, DriveRush, StandingHeavyPunch2, DriveRush2];
 
 describe("Regular combo scaling", () => {
     beforeEach(() => {
@@ -169,15 +170,49 @@ describe("Drive Rush", () => {
         }
     });
 
-    it("should add 25% scaling penalty inside a combo", (done) => {
+    it("should add a 15% scaling penalty inside a combo", (done) => {
         const combo = new Combo();
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(DriveRush, false);
         combo.addMove(StandingHeavyPunch2, true);
         combo.addMove(Shoryuken);
         const data = combo.getComboData();
-        console.log(data);
         assert.strictEqual(data?.totalDamage, 2432);
+        done();
+    });
+
+    it("should only apply a penalty once throughout the combo", (done) => {
+        const combo = new Combo();
+        combo.addMove(StandingHeavyPunch, true);
+        combo.addMove(DriveRush);
+        combo.addMove(StandingHeavyPunch2, true);
+        combo.addMove(DriveRush2);
+        combo.addMove(Shoryuken);
+        const data = combo.getComboData();
+        assert.strictEqual(data?.steps[2].scaling, 85);
+        assert.strictEqual(data?.steps[4].scaling, 80 * 0.85);
+        done();
+    });
+
+    it("should stack with Perfect Parry", (done) => {
+        const combo = new Combo();
+        combo.addMove(StandingHeavyPunch, true);
+        combo.addMove(DriveRush);
+        combo.addMove(StandingHeavyPunch2);
+        const data = combo.getComboData({ perfectParry: true });
+
+        assert.strictEqual(data?.steps[0].scaling, 50);
+        assert.strictEqual(data.steps[2].scaling, Math.floor(50 * 0.85));
+        done();
+    });
+
+    it("should stack with 2MK cancel penalty", (done) => {
+        const combo = new Combo();
+        combo.addMove(CrMK, true);
+        combo.addMove(DriveRush);
+        combo.addMove(StandingLightPunch, true);
+        combo.addMove(Shoryuken);
+        const data = combo.getComboData();
         done();
     });
 })
@@ -196,7 +231,6 @@ describe("Supers scaling", () => {
         combo.addMove(TatsumakiSenpukyaku);
         combo.addMove(Shoryuken, true);
         combo.addMove(ShinShoryuken);
-        console.log(combo.getComboData()?.steps);
         assert.strictEqual(combo.getComboData()?.steps[3].scaling, 60);
         done();
     });
@@ -211,13 +245,26 @@ describe("Supers scaling", () => {
         done();
     });
 
-    it("should be at 40% if combo drops to less than 40% and a Super 2 is used", (done) => {
+    it("should be at 40% if combo drops to less than 40% and a Lv.2 Super is used", (done) => {
         const combo = new Combo();
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(TatsumakiSenpukyaku);
         combo.addMove(Shoryuken, true);
         combo.addMove(ShinHashogeki);
         assert.strictEqual(combo.getComboData({ perfectParry: true })?.steps[3].scaling, 40);
+        done();
+    });
+
+     it("should be at 30% if combo drops to less than 30% and a Lv.1 Super is used", (done) => {
+        const combo = new Combo();
+        combo.addMove(StandingHeavyPunch, true);
+        combo.addMove(DriveRush);
+        combo.addMove(StandingHeavyPunch2, true);
+        combo.addMove(TatsumakiSenpukyaku);
+        combo.addMove(Shoryuken, true);
+        combo.addMove(ShinkuHadoken);
+
+        assert.strictEqual(combo.getComboData({ perfectParry: true })?.steps[5].scaling, 30);
         done();
     });
 });

@@ -1,7 +1,8 @@
-import Ryu from "@/data/ryu";
+import Movesets from "@/data";
 
 function CharacterPage({ params: { character } }: { params: { character: string } }) {
-    return character;
+    const x = Movesets[character as keyof typeof Movesets];
+    return JSON.stringify(x);
 };
 
 export default CharacterPage;
