@@ -1,29 +1,8 @@
-import Move from "@/logic/move";
+import { CharacterMoveset } from "@/logic/types/moveset-move";
+import withGlobalMoves from "@/data/with-global-moves";
 
-interface MovesetMove extends Omit<Move, "previousMove" | "nextMove" | "input" | "grounded" | "cancelled"> {
-    canUseConsumable?: true;
-}
-
-interface Moveset {
-    normals: {
-        [k: string]: MovesetMove;
-    };
-    "target-combos": {
-        [k: string]: MovesetMove;
-    };
-    specials: {
-        [k: string]: MovesetMove;
-    };
-    supers: {
-        [k: string]: MovesetMove;
-    };
-    throws: {
-        [k: string]: MovesetMove;   
-    };
-}
-
-const Moveset: Moveset = {
-    "normals": {
+const Moveset: CharacterMoveset = {
+    "normal": {
         "5LP": {
             type: "normal",
             damage: 300,
@@ -118,7 +97,7 @@ const Moveset: Moveset = {
             damage: 800,
         },
     },
-    "target-combos": {
+    "target-combo": {
         "5HP~HK": {
             type: "target-combo",
             damage: 1000,
@@ -128,21 +107,7 @@ const Moveset: Moveset = {
             damage: 1620,
         },
     },
-    "throws": {
-        "5LPLK": {
-            type: "throw",
-            damage: 1220,
-        },
-        "4LPLK": {
-            type: "throw",
-            damage: 1220
-        },
-    },
-    "HPHK": {
-        type: "drive-impact",
-        damage: 800
-    },
-    specials: {
+    special: {
         "236P": {
             damage: {
                 light: 600,
@@ -181,7 +146,27 @@ const Moveset: Moveset = {
             type: "special",
             canUseConsumable: true,
         }
+    },
+    super: {
+        "236236P": {
+            damage: 2000,
+            type: "super1",
+            canUseConsumable: true
+        },
+        "214214P": {
+            damage: 3000,
+            canUseConsumable: true,
+            type: "super2"
+        },
+        "236236K": {
+            damage: 4000,
+            type: "super3"
+        },
+        "236236K-CA": {
+            damage: 4500,
+            type: "super3"
+        }
     }
 };
 
-export default Moveset;
+export default withGlobalMoves(Moveset);

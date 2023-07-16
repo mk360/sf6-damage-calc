@@ -1,0 +1,36 @@
+.normal {
+    background-color: red;
+    margin: 0.25rem;
+    &:hover {
+        background-color: lighten(red, 20%);
+    }
+}
+
+.target-combo {
+    background-color: green;
+    margin: 0.25rem;
+    &:hover {
+        background-color: lighten(green, 20%);
+    }
+}
+
+.special {
+    background-color: blue;
+    margin: 0.25rem;
+    button {
+        background-color: green;
+        margin: 0.25rem;
+        padding: 0.25rem;
+        &:hover {
+            background-color: lighten(green, 20%);
+        }
+    }
+}
+
+.throw {
+    background-color: orange;
+    margin: 0.25rem;
+    &:hover {
+        background-color: lighten(orange, 20%);
+    }
+}

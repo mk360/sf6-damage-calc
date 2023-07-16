@@ -5,7 +5,7 @@
  * scaling évolutif (Jamie, Kimberly)
  */
 
-import Moveset from "@/data/ryu";
+import { CharacterMoveset } from "./types/moveset-move";
 
 class Character {
     consumables?: {
@@ -14,11 +14,18 @@ class Character {
     };
     powerups?: {
         name: string;
+        max: number;
+        currentLevel: 1;
+        baseLevel: 1;
     };
-    moveset: Moveset;
-    scaling: number;
+    moveset: CharacterMoveset;
+    protected _scaling: number;
     constructor() {
-        this.scaling = 100;
+        this._scaling = 100;
+    }
+
+    getScaling() {
+        return this._scaling;
     }
 }
 

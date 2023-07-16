@@ -3,6 +3,7 @@ import Combo from "../src/logic/combo";
 import { it } from "mocha";
 import assert from "node:assert";
 import DamageLevels from "@/logic/types/damage-levels";
+import Ryu from "@/data/characters/ryu";
 
 const StandingHeavyPunch = new Move("5HP", "normal", 800);
 const StandingHeavyPunch2 = new Move("5HP", "normal", 800);
@@ -51,7 +52,7 @@ describe("Regular combo scaling", () => {
     });
 
     it("should apply full damage to the first two moves", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(Shoryuken);
         assert.strictEqual(combo.getComboData()?.totalDamage, (Shoryuken.damage as DamageLevels).heavy + (StandingHeavyPunch.damage as number));
@@ -59,7 +60,7 @@ describe("Regular combo scaling", () => {
     });
 
     it("should scale down a special cancelled by a super", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(HighBladeKick, true);
         combo.addMove(ShinShoryuken);
 
@@ -70,7 +71,7 @@ describe("Regular combo scaling", () => {
     });
 
     it("should not scale a super that's not preceded by a special cancel", () => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(TatsumakiSenpukyaku);
         combo.addMove(ShinShoryuken);
@@ -80,7 +81,7 @@ describe("Regular combo scaling", () => {
     });
 
     it("should scale the 3rd move of a standard combo by 80%", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(HighBladeKick, true);
         combo.addMove(TatsumakiSenpukyaku); // not a true combo, added just to have a different move
@@ -90,7 +91,7 @@ describe("Regular combo scaling", () => {
     });
 
     it("should scale the 4th move of a standard combo by 70%", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(HighBladeKick);
         combo.addMove(TatsumakiSenpukyaku);
@@ -102,7 +103,7 @@ describe("Regular combo scaling", () => {
     });
 
     it("should add 20% damage for a Punish Counter's 1st move", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(HighBladeKick);
         const data = combo.getComboData({ isCounter: true });
@@ -112,7 +113,7 @@ describe("Regular combo scaling", () => {
     });
 
     it("should scale down to 80% after a cancelled starter 2MK", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(CrMK, true);
         combo.addMove(HighBladeKick);
 
@@ -122,7 +123,7 @@ describe("Regular combo scaling", () => {
     });
 
     it("should accelerate scaling when starting with a light normal", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingLightPunch, true);
         combo.addMove(Shoryuken);
         const data = combo.getComboData();
@@ -141,7 +142,7 @@ describe("Perfect Parry combos", () => {
     });
 
     it("should halve all scaling and damage", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(Shoryuken);
         const data = combo.getComboData({ isCounter: false, perfectParry: true });
@@ -149,8 +150,8 @@ describe("Perfect Parry combos", () => {
         done();
     });
 
-    it("should decrease scaling by 5% after each combo move", (done) => {
-        const combo = new Combo();
+    it("should increase scaling by 5% after each combo move", (done) => {
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch);
         combo.addMove(CrMK, true);
         combo.addMove(TatsumakiSenpukyaku);
@@ -171,7 +172,7 @@ describe("Drive Rush", () => {
     });
 
     it("should add a 15% scaling penalty inside a combo", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(DriveRush, false);
         combo.addMove(StandingHeavyPunch2, true);
@@ -182,7 +183,7 @@ describe("Drive Rush", () => {
     });
 
     it("should only apply a penalty once throughout the combo", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(DriveRush);
         combo.addMove(StandingHeavyPunch2, true);
@@ -195,7 +196,7 @@ describe("Drive Rush", () => {
     });
 
     it("should stack with Perfect Parry", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(DriveRush);
         combo.addMove(StandingHeavyPunch2);
@@ -207,7 +208,7 @@ describe("Drive Rush", () => {
     });
 
     it("should stack with 2MK cancel penalty", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(CrMK, true);
         combo.addMove(DriveRush);
         combo.addMove(StandingLightPunch, true);
@@ -226,7 +227,7 @@ describe("Supers scaling", () => {
     });
 
     it("should be higher than 50% if combo string stays over 50%", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(TatsumakiSenpukyaku);
         combo.addMove(Shoryuken, true);
@@ -236,7 +237,7 @@ describe("Supers scaling", () => {
     });
 
     it("should be at 50% if combo drops to less than 50% and a Lv. 3 Super is used", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(TatsumakiSenpukyaku);
         combo.addMove(Shoryuken, true);
@@ -246,7 +247,7 @@ describe("Supers scaling", () => {
     });
 
     it("should be at 40% if combo drops to less than 40% and a Lv.2 Super is used", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(TatsumakiSenpukyaku);
         combo.addMove(Shoryuken, true);
@@ -256,7 +257,7 @@ describe("Supers scaling", () => {
     });
 
      it("should be at 30% if combo drops to less than 30% and a Lv.1 Super is used", (done) => {
-        const combo = new Combo();
+        const combo = new Combo(Ryu);
         combo.addMove(StandingHeavyPunch, true);
         combo.addMove(DriveRush);
         combo.addMove(StandingHeavyPunch2, true);

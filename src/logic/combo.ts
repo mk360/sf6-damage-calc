@@ -1,6 +1,8 @@
+import Character from "./character";
 import Move from "./move";
 import DamageLevels from "./types/damage-levels";
 import MoveType from "./types/move-type";
+import ScalingType from "@/logic/scaling-types";
 
 interface ComboStep {
     move: string;
@@ -9,10 +11,6 @@ interface ComboStep {
     scaling: number;
 }
 
-const generalScaling = [100, 100, 80, 70, 60, 50, 40, 30, 20, 10];
-const lightNormalScaling = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10];
-const crMkScaling = [100, 80, 70, 60, 50, 40, 30, 20, 10, 10];
-
 // improvement: the combo engine should not select the move's version; the move itself should determine its own damage output and pass it to the combo.
 
 class Combo {
@@ -20,7 +18,7 @@ class Combo {
     ender: Move | null;
     comboSteps: ComboStep[];
 
-    constructor() {
+    constructor(private character: Character) {
         this.starter = null;
         this.ender = null;
         this.comboSteps = [];
@@ -29,8 +27,12 @@ class Combo {
     removeMove(move: Move) {
         if (move.previousMove) {
             this.ender = move.previousMove;
-            move.previousMove.nextMove = null;
+            if (move.nextMove) {
+                move.nextMove.previousMove = move.previousMove;
+                move.previousMove.nextMove = move.nextMove;
+            }
             move.previousMove = null;
+            move.nextMove = null;
         } else {
             console.warn("Cannot remove a move on top of the combo");
         }
@@ -49,11 +51,6 @@ class Combo {
         }
     }
 
-    getMoveStrength(input: string) {
-        const [match] = input.match(/[LMH]/) ?? ["any"];
-        return match === "M" ? "medium" : match === "L" ? "light" : match === "H" ? "heavy" : "any";
-    }
-
     getTrueMovePercentage(basePercentage: number, moveType: MoveType, cap: number) {
         if (basePercentage < 50 && moveType === "super3") return 50;
         if (basePercentage < 40 && moveType === "super2") return 40;
@@ -61,13 +58,13 @@ class Combo {
         return Math.max(0.1 * cap, basePercentage);
     }
 
-    getComboData(settings?: Partial<ScalingCapSettings> & Partial<{ isCounter: boolean }>) {
+    getComboData(settings?: Partial<ScalingCapSettings & { isCounter: boolean }>) {
         let totalDamage = 0;
         let currentMove = this.starter;
         let comboHits = 1;
-        const usedScaling = this.getMoveStrength(this.starter?.input!) === "light" && this.starter?.grounded ? lightNormalScaling : this.starter?.input === "2MK" && this.starter.cancelled ? crMkScaling : generalScaling;
+        const usedScaling = this.starter?.strength === "light" && this.starter?.type === "normal" && this.starter?.grounded ? ScalingType.lightNormal : this.starter?.input === "2MK" && this.starter.cancelled ? ScalingType.crMk : ScalingType.general;
         
-        const cap = this.getScalingCap(settings?.perfectParry!, 0);
+        const cap = this.getScalingCap(settings?.perfectParry!);
         let scalingPenalty = 0;
         let driveRushPenaltyAdded = false;
     
@@ -89,8 +86,7 @@ class Combo {
                 continue;
             }
             let moveDamage = this.getBaseMoveDamage(currentMove);
-            if (comboHits === 1 && settings?.isCounter) moveDamage *= 1.2;
-            debugger;
+            if (comboHits === 1 && !["super1", "super2", "super3"].includes(currentMove.type) && settings?.isCounter) moveDamage *= 1.2;
             const moveOrderScale = this.getScalingFromOrder(comboHits, cap, usedScaling);
             const scaledPercentage = moveOrderScale * (cap - scalingPenalty) / cap;
             
@@ -114,6 +110,21 @@ class Combo {
                 }
             }
 
+            if (currentMove.type === "drive-impact") {
+                if (settings?.driveImpact === "punish") {
+                    comboHits++;
+                }
+            }
+
+            currentMove.afterExecution?.({
+                previousMove: currentMove.previousMove,
+                nextMove: currentMove.nextMove,
+                scalingPenalty,
+                comboHits,
+                usedScaling,
+
+            });
+
             comboHits++;
 
             if (currentMove.nextMove) {
@@ -126,11 +137,10 @@ class Combo {
         }
     }
 
-    getScalingCap(perfectParry: boolean, scalingBuff: number) {
-        let scaling = 100;
-        if (perfectParry) scaling /= 2;
-        if (scalingBuff) scaling *= (1 + scalingBuff);
-        return Math.floor(scaling);
+    getScalingCap(perfectParry: boolean) {
+        let baseScaling = this.character.getScaling();
+        if (perfectParry) baseScaling /= 2;
+        return Math.floor(baseScaling);
     }
 
     getScalingFromOrder(order: number, scalingCap: number, usedScaling: number[]) {
