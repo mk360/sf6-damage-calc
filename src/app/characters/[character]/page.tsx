@@ -26,12 +26,15 @@ function CharacterPage({ params: { character } }: { params: { character: keyof t
 
     function addMove(move: Omit<IComboMove, "id">) {
         const moveCopy: IComboMove = {...move, id: shortid() };
+        console.log({ moveCopy });
         setCombo((combo) => [...combo, moveCopy]);
     }
 
     function removeMove(moveIndex: number) {
-        const comboWithoutMove = combo.splice(moveIndex, 1);
-        setCombo(comboWithoutMove);
+        const comboCopy = [...combo];
+        comboCopy.splice(moveIndex, 1);
+        console.log({ comboCopy });
+        setCombo(comboCopy);
     }
 
     return (

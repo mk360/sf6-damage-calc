@@ -6,7 +6,7 @@ function ComboMove({ type, input, index, onRemove }: { type: MoveType, input: st
     return <div className={style["combo-move"]} style={{ position: "relative" }}>{input}
     <button onClick={() => {
         onRemove(index);
-    }} style={{ position: "absolute", zIndex: 1, transform: "translate(-10%, -80%)", height: 25, width: 25, borderRadius: "50%", textAlign: "center", backgroundColor: "blue" }}>x</button></div>
+    }} style={{ position: "absolute", paddingBottom: 3, zIndex: 1, transform: "translate(-10%, -80%)", height: 25, width: 25, borderRadius: "50%", verticalAlign: "middle", textAlign: "center", backgroundColor: "blue" }}>&times;</button></div>
 };
 
 export default ComboMove;
