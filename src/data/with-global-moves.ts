@@ -1,19 +1,25 @@
 import { MovesetMove, CharacterMoveset } from "@/logic/types/moveset-move";
 
 export interface MovesetWithGlobalMoves extends CharacterMoveset {
-    "drive-impact": MovesetMove;
+    "drive-impact": {
+        [k: string]: MovesetMove;
+    }
     throw: {
         [k: string]: MovesetMove;
     }
-    "drive-rush": MovesetMove;
+    "drive-rush": {
+        [k: string]: MovesetMove;
+    }
 }
 
 function withGlobalMoves<T extends CharacterMoveset>(moveset: T): MovesetWithGlobalMoves {
     return {
         ...moveset,
         "drive-impact": {
-            damage: 800,
-            type: "drive-impact"
+            "HPHK": {
+                damage: 800,
+                type: "drive-impact"
+            }
         },
         "throw": {
             "5LPLK": {
@@ -26,8 +32,10 @@ function withGlobalMoves<T extends CharacterMoveset>(moveset: T): MovesetWithGlo
             },
         },
         "drive-rush": {
-            type: "drive-rush",
-            damage: 0
+            "66": {
+                type: "drive-rush",
+                damage: 0
+            }
         }
     };
 };

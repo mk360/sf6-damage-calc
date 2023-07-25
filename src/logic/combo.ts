@@ -1,17 +1,8 @@
 import Character from "./character";
 import Move from "./move";
-import DamageLevels from "./types/damage-levels";
+import ComboStep from "./types/combo-step";
 import MoveType from "./types/move-type";
 import ScalingType from "@/logic/scaling-types";
-
-interface ComboStep {
-    move: string;
-    damage: number;
-    unscaledDamage: number;
-    scaling: number;
-}
-
-// improvement: the combo engine should not select the move's version; the move itself should determine its own damage output and pass it to the combo.
 
 class Combo {
     starter: Move | null;
@@ -85,7 +76,7 @@ class Combo {
                 }
                 continue;
             }
-            let moveDamage = this.getBaseMoveDamage(currentMove);
+            let moveDamage = currentMove.damage as number;
             if (comboHits === 1 && !["super1", "super2", "super3"].includes(currentMove.type) && settings?.isCounter) moveDamage *= 1.2;
             const moveOrderScale = this.getScalingFromOrder(comboHits, cap, usedScaling);
             const scaledPercentage = moveOrderScale * (cap - scalingPenalty) / cap;
@@ -116,20 +107,29 @@ class Combo {
                 }
             }
 
-            currentMove.afterExecution?.({
-                previousMove: currentMove.previousMove,
-                nextMove: currentMove.nextMove,
-                scalingPenalty,
-                comboHits,
-                usedScaling,
+            if (currentMove.afterExecution) {
+                const x = currentMove.afterExecution({
+                    previousMove: currentMove.previousMove,
+                    nextMove: currentMove.nextMove,
+                    scalingPenalty,
+                    comboHits,
+                    usedScaling,
+                });
 
-            });
+                if (x.scaling) {
+                    scalingPenalty += x.scaling;
+                }
+                if (x.extraHits) {
+                    comboHits += x.extraHits;
+                }
+            }
 
             comboHits++;
 
             if (currentMove.nextMove) {
                 currentMove = currentMove.nextMove;
             }
+
             else return {
                 totalDamage,
                 steps: this.comboSteps
@@ -145,23 +145,7 @@ class Combo {
 
     getScalingFromOrder(order: number, scalingCap: number, usedScaling: number[]) {
         const manualScaling = (usedScaling[order - 1] ?? 10) * (scalingCap / 100);
-        return Math.max(10, manualScaling);
-    }
-
-    getBaseMoveDamage(move: Move) {
-        if (move.type === "special") {
-            const moveDamage = move.damage as DamageLevels;
-            const [endingInput] = move.input.match(/[LMHPK][PK]/)!;
-
-            switch (true) {
-                case endingInput === "HP" || endingInput === "HK": return moveDamage.heavy;
-                case endingInput === "MP" || endingInput === "MK": return moveDamage.medium;
-                case endingInput === "LP" || endingInput === "LK": return moveDamage.light;
-                case endingInput === "PP" || endingInput === "KK": return moveDamage.overdrive;
-            }
-        }
-
-        return move.damage as number;
+        return Math.max(0.1 * scalingCap, manualScaling);
     }
 
     printCombo() {

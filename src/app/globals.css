@@ -26,6 +26,11 @@ html, body {
   height: 100%;
 }
 
+.main-content {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(

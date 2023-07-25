@@ -1,2 +1,2 @@
 export { default as ryu } from "./ryu";
-export { default as jamie } from "./jamie";
+// export { default as jamie } from "./jamie";

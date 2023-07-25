@@ -6,6 +6,11 @@
     }
 }
 
+.combo-contexts {
+    display: flex;
+    gap: 1rem;
+}
+
 .combo-move {
     border: 3px solid white;
     padding: 6px;
@@ -49,8 +54,13 @@
     }
 
     &[for=regular-combo] {
+        background-color: green;
+    }
+
+    &[for=perfect-parry] {
         background-color: blue;
     }
+
 }
 
 .combo-context-radio {
@@ -64,13 +74,17 @@
         }
 
         &[for=regular-combo] {
+            background-color: darken(green, 10%);
+        }
+
+        &[for=perfect-parry] {
             background-color: darken(blue, 30%);
         }
     }
 }
 
 .combo-context-radio {
-    appearance: none;
+    display: none;
     font: inherit;
     color: currentColor;
     width: 100%;
@@ -86,13 +100,11 @@
 }
 
 .combo-area {
-    padding: 4rem;
+    padding: 1rem;
     background-color: black;
     display: flex;
-    gap: 30px;
+    flex-wrap: wrap;
     border-color: white;
-    height: 4rem;
-    width: 100%;
     border-width: 0.25rem;
     border-style: double;
     border-radius: 0.25rem;

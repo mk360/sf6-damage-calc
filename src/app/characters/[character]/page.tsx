@@ -3,45 +3,62 @@
 import Movesets from "@/data/movesets";
 import MoveButton from "./move-button";
 import style from "./style.module.scss";
-import MoveType from "@/logic/types/move-type";
 import SpecialButton from "./special-button";
 import { useState } from "react";
 import Combo from "@/logic/combo";
 import * as Characters from "@/data/characters";
 import shortid from "shortid";
 import ComboMove from "./combo-move";
+import { IComboMove, ISpecialMove } from "../../types/combo-move-interface";
+import MoveCancelIndicator from "./move-cancel-indicator";
+import Move from "@/logic/move";
+import ComboStep from "@/logic/types/combo-step";
+import getInputWithStrength from "@/app/utils/get-input-with-strength";
+import MoveStrength from "@/app/types/move-strength";
+import MoveType from "@/logic/types/move-type";
 
-interface IComboMove {
-    type: MoveType;
-    input: string;
-    id: string;
+function getMoveDisplay(input: string, strength: "light" | "medium" | "heavy" | "overdrive") {
+    const [attackButton] = input.match(/[PK]+/)!;
+    return input.replace(attackButton, (strength === "overdrive" ? attackButton : strength[0].toUpperCase()) + attackButton);
 }
 
 function CharacterPage({ params: { character } }: { params: { character: keyof typeof Characters } }) {
-
     const x = Movesets[character as keyof typeof Movesets];
-    const [combo, setCombo] = useState<IComboMove[]>([]);
+    const [comboMoves, setCombo] = useState<Array<IComboMove | ISpecialMove>>([]);
     const [comboContext, setComboContext] = useState("");
-    const comboData = new Combo(Characters[character]);
+    const [comboResult, setComboResult] = useState<{
+        totalDamage: number;
+        comboSteps: ComboStep[]
+    }>({ totalDamage: 0, comboSteps: [] });
 
-    function addMove(move: Omit<IComboMove, "id">) {
+    function addComboMove(move: Omit<IComboMove, "id" >) {
         const moveCopy: IComboMove = {...move, id: shortid() };
-        console.log({ moveCopy });
         setCombo((combo) => [...combo, moveCopy]);
     }
 
     function removeMove(moveIndex: number) {
-        const comboCopy = [...combo];
+        const comboCopy = [...comboMoves];
         comboCopy.splice(moveIndex, 1);
-        console.log({ comboCopy });
         setCombo(comboCopy);
     }
+
+    function addSpecialMove({ input, version }: { input: string; version: MoveStrength }) {
+        const moveCopy: ISpecialMove = {
+            id: shortid(),
+            version,
+            input,
+            type: "special"
+        };
+
+        setCombo((combo) => [...combo, moveCopy]);
+    };
 
     return (
         <div>
             <fieldset>
-                <legend>Combo Context</legend>
-                <div><input onChange={() => {
+                <legend>Combo Start</legend>
+                <div className={style["combo-contexts"]}>
+                    <div><input onChange={() => {
                     setComboContext("regular");
                 }} type="radio" className={style["combo-context-radio"]} id="regular-combo" value="regular" name="combo-start" /><label className={style["combo-start"]} htmlFor="regular-combo">Regular Combo</label> </div>
                 <div><input onChange={() => {
@@ -55,41 +72,40 @@ function CharacterPage({ params: { character } }: { params: { character: keyof t
                     setComboContext("perfect-parry");
                 }} className={style["combo-context-radio"]} type="radio" id="perfect-parry" value="perfect-parry" name="combo-start" />
                 <label className={style["combo-start"]} htmlFor="perfect-parry">Perfect Parry</label></div>
-            </fieldset>
-            <fieldset>
-                <legend>Character Settings</legend>
-                <div>
-                    
                 </div>
             </fieldset>
+           
             <h3>Normals</h3>
             {Object.entries(x.normal).map(([moveInput, move]) => (
-                <MoveButton onClick={addMove} key={moveInput} name={moveInput} type="normal" />
+                <MoveButton onClick={addComboMove} key={moveInput} name={moveInput} type="normal" />
             ))}
 
             <h3>Target Combos</h3>
             {Object.entries(x["target-combo"]).map(([moveInput, move]) => (
-                <MoveButton type="target-combo" onClick={addMove} key={moveInput} name={moveInput} />
+                <MoveButton type="target-combo" onClick={addComboMove} key={moveInput} name={moveInput} />
             ))}
 
             <h3>Specials</h3>
-            <div style={{ display: "flex", gap: 6 }}>
-                {Object.entries(x["special"]).map(([moveInput, move]) => (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {Object.entries(x["special"]).map(([moveInput]) => (
                     <SpecialButton onClick={(input, strength) => {
-                        const attackButton = input[input.length - 1];
-                        const newInput = input.replace(attackButton, (strength === "overdrive" ? attackButton : strength[0].toUpperCase()) + attackButton);
-                        addMove({
-                            type: "special",
-                            input: newInput,
+                        addSpecialMove({
+                            input,
+                            version: strength,
                         });
                     }} key={moveInput} name={moveInput}/>
                 ))}
             </div>
 
             <h3>Throws</h3>
-            {/* {Object.entries(x["throw"]).map(([moveInput, move]) => (
-                <MoveButton onClick={addMoveToCombo} key={moveInput} name={moveInput} type={move.type} />
-            ))} */}
+            {Object.entries(x["throw"]).map(([moveInput, move]) => (
+                <MoveButton type="throw" onClick={addComboMove} key={moveInput} name={moveInput} />
+            ))}
+
+            <h3>Supers</h3>
+            {Object.entries({...x.super1, ...x.super2, ...x.super3 }).map(([moveInput, move]) => (
+                <MoveButton type={move.type as Exclude<MoveType, "special">} name={moveInput} onClick={addComboMove} key={moveInput} />
+            ))}
 
             <h3>Global Mechanics</h3>
             <button>Drive Rush</button>
@@ -97,12 +113,33 @@ function CharacterPage({ params: { character } }: { params: { character: keyof t
 
             <div className={style["combo-area"]}>
                 
-                {combo.map((move, index) => (
+                {comboMoves.map((move, index) => (
                     <>
                         <ComboMove {...move} index={index} key={move.id} onRemove={removeMove} />
-                        {/* {index !== combo.length - 1 && <MoveCancelIndicator move={move} />} */}
+                        {index !== comboMoves.length - 1 && <MoveCancelIndicator move={move} />}
                     </>
                 ))}
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
+                <button style={{ border: "1px solid white", borderRadius: 6, padding: 6 }} onClick={() => {
+                    const combo = new Combo(Characters[character]);
+                    const moveset = Movesets[character];
+                    for (let move of comboMoves) {
+                        const inputWithStrength = getInputWithStrength(move.input, move.type === "special" ? move.version : "overdrive");
+                        const moveData = moveset[move.type][move.input];
+                        const moveClass = new Move(inputWithStrength, move.type, moveData.damage, move.type === "special" && move.version || "heavy");
+                        moveClass.afterExecution = moveData.afterExecution;
+                        combo.addMove(moveClass, move.cancelled);
+                    }
+
+                    const comboData = combo.getComboData({
+                        perfectParry: comboContext === "perfect-parry",
+                        isCounter: comboContext === "punish-counter"
+                    });
+                }}>
+                    Compute Combo
+                </button>
             </div>
         </div>
     );

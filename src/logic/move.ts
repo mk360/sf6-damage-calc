@@ -1,8 +1,6 @@
 import DamageLevels from "./types/damage-levels";
 import MoveType from "./types/move-type";
 
-// improvement: find a way to allow multiple similar moves in a combo without them referencing the same object in memory
-
 class Move {
     input: string;
     type: MoveType;
@@ -12,7 +10,10 @@ class Move {
     strength: "light" | "medium" | "heavy" | "overdrive";
     previousMove: Move | null;
     damage: number | DamageLevels;
-    afterExecution?({ usedScaling, scalingPenalty, nextMove, previousMove, comboHits }: AfterMoveExecutionArgs): void;
+    afterExecution?({ usedScaling, scalingPenalty, nextMove, previousMove, comboHits }: AfterMoveExecutionArgs): {
+        extraHits?: number;
+        scaling?: number;
+    };
     nextMove: Move | null;
     constructor(input: string, type: MoveType, damage: number | DamageLevels, version?: "light" | "medium" | "heavy" | "overdrive") {
         this.input = input;

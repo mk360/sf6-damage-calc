@@ -14,7 +14,13 @@ export interface CharacterMoveset {
     special: {
         [k: string]: MovesetMove;
     };
-    super: {
+    super1: {
+        [k: string]: MovesetMove;
+    };
+    super2: {
+        [k: string]: MovesetMove;
+    };
+    super3: {
         [k: string]: MovesetMove;
     };
 }

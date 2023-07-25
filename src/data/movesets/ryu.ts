@@ -1,5 +1,6 @@
 import { CharacterMoveset } from "@/logic/types/moveset-move";
 import withGlobalMoves from "@/data/with-global-moves";
+import Move from "@/logic/move";
 
 const Moveset: CharacterMoveset = {
     "normal": {
@@ -118,14 +119,19 @@ const Moveset: CharacterMoveset = {
             type: "special",
             canUseConsumable: true,
         },
-        "623P": {
+        "236K": {
             damage: {
-                light: 1100,
-                medium: 1200,
-                heavy: 1400,
-                overdrive: 1600
+                light: 1000,
+                medium: 1100,
+                heavy: 1300,
+                overdrive: 800
             },
-            type: "special"
+            type: "special",
+            afterExecution(this: Move) {
+                return {
+                    scaling: 10
+                };
+            },
         },
         "214K": {
             damage: {
@@ -145,24 +151,37 @@ const Moveset: CharacterMoveset = {
             },
             type: "special",
             canUseConsumable: true,
-        }
+        },
+        "623P": {
+            damage: {
+                light: 1100,
+                medium: 1200,
+                heavy: 1400,
+                overdrive: 1600
+            },
+            type: "special",
+        },
     },
-    super: {
+    super1: {
         "236236P": {
             damage: 2000,
             type: "super1",
             canUseConsumable: true
         },
+    },
+    super2: {
         "214214P": {
             damage: 3000,
             canUseConsumable: true,
             type: "super2"
         },
+    },
+    super3: {
         "236236K": {
             damage: 4000,
             type: "super3"
         },
-        "236236K-CA": {
+        "CA-236236K": {
             damage: 4500,
             type: "super3"
         }

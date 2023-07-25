@@ -3,7 +3,7 @@
 import MoveType from "@/logic/types/move-type";
 import style from "./style.module.scss";
 
-function MoveButton({ name, onClick, type }: { name: string; type: MoveType; onClick: (move: { type: MoveType, input: string }) => void }) {
+function MoveButton({ name, onClick, type }: { name: string; type: Exclude<MoveType, "special">; onClick: (move: { type: Exclude<MoveType, "special">, input: string }) => void }) {
     return (
         <button onClick={() => {
             onClick({
