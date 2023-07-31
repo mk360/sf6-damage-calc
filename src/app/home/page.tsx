@@ -28,11 +28,12 @@ export default function Home() {
   const [character, setCharacter] = useState("");
   return (
       <div className={styles["main-grid"]}>
-        <div className={styles["character-portrait"]}>
+        <h4>Character Select</h4>
+        {/* <div className={styles["character-portrait"]}>
           {character && (
-          <img width="100%" height="100%" alt={character} lang='en' aria-labelledby={character} src={`/portraits/${character}.png`} />
+            <img width="100%" height="100%" alt={character} lang='en' aria-labelledby={character} src={`/portraits/${character}.png`} />
           )}
-        </div>
+        </div> */}
         <div className={styles["character-select"]}>
           {createCharacterSelectors(setCharacter)}
         </div>
