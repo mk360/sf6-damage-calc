@@ -1,7 +1,7 @@
 import Move from "../move";
 
 export interface MovesetMove extends Omit<Move, "strength" | "previousMove" | "nextMove" | "input" | "grounded" | "cancelled"> {
-    canUseConsumable?: true;
+    needsConsumable?: true;
 }
 
 export interface CharacterMoveset {

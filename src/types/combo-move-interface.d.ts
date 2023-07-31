@@ -1,4 +1,4 @@
-import MoveStrength from "@/app/types/move-strength";
+import MoveStrength from "@/types/move-strength";
 import MoveType from "@/logic/types/move-type";
 
 export interface IComboMove {

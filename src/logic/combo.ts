@@ -53,7 +53,7 @@ class Combo {
         let totalDamage = 0;
         let currentMove = this.starter;
         let comboHits = 1;
-        const usedScaling = this.starter?.strength === "light" && this.starter?.type === "normal" && this.starter?.grounded ? ScalingType.lightNormal : this.starter?.input === "2MK" && this.starter.cancelled ? ScalingType.crMk : ScalingType.general;
+        let usedScaling = this.starter?.strength === "light" && this.starter?.type === "normal" && this.starter?.grounded ? ScalingType.lightNormal : this.starter?.input === "2MK" && this.starter.cancelled ? ScalingType.crMk : ScalingType.general;
         
         const cap = this.getScalingCap(settings?.perfectParry!);
         let scalingPenalty = 0;
@@ -61,21 +61,29 @@ class Combo {
     
         while (currentMove) {
             if (currentMove.type === "drive-rush" && currentMove.previousMove?.cancelled) {
-                if (!driveRushPenaltyAdded) {
-                    scalingPenalty += 0.15 * cap;
-                    driveRushPenaltyAdded = true;
-                }
-                this.comboSteps.push({
+                const driveRushStep: ComboStep = {
                     damage: 0,
                     unscaledDamage: 0,
                     scaling: 0,
-                    move: currentMove.input
-                });
+                    move: currentMove.input,
+                };
+
+                if (!driveRushPenaltyAdded) {
+                    scalingPenalty += 0.15 * cap;
+                    driveRushPenaltyAdded = true;
+                    driveRushStep.scalingEffects = {
+                        extraScaling: 15
+                    }
+                }
+
+                this.comboSteps.push(driveRushStep);
+
                 if (currentMove.nextMove) {
                     currentMove = currentMove.nextMove;
                 }
                 continue;
             }
+
             let moveDamage = currentMove.damage as number;
             if (comboHits === 1 && !["super1", "super2", "super3"].includes(currentMove.type) && settings?.isCounter) moveDamage *= 1.2;
             const moveOrderScale = this.getScalingFromOrder(comboHits, cap, usedScaling);
@@ -84,12 +92,12 @@ class Combo {
             const trueMovePercentage = Math.floor(this.getTrueMovePercentage(scaledPercentage, currentMove.type, cap));
             const trueMoveDamage = Math.floor(moveDamage * trueMovePercentage / 100);
 
-            this.comboSteps.push({
+            const comboStep: ComboStep = {
                 damage: trueMoveDamage,
                 unscaledDamage: moveDamage,
                 scaling: trueMovePercentage,
                 move: currentMove.input
-            });
+            };
 
             totalDamage += trueMoveDamage;
 
@@ -108,7 +116,7 @@ class Combo {
             }
 
             if (currentMove.afterExecution) {
-                const x = currentMove.afterExecution({
+                const extraComboProperties = currentMove.afterExecution({
                     previousMove: currentMove.previousMove,
                     nextMove: currentMove.nextMove,
                     scalingPenalty,
@@ -116,25 +124,30 @@ class Combo {
                     usedScaling,
                 });
 
-                if (x.scaling) {
-                    scalingPenalty += x.scaling;
+                if (extraComboProperties?.extraScaling) {
+                    scalingPenalty += extraComboProperties.extraScaling;
                 }
-                if (x.extraHits) {
-                    comboHits += x.extraHits;
+                if (extraComboProperties?.extraHits) {
+                    comboHits += extraComboProperties.extraHits;
                 }
+
+                if (extraComboProperties?.newScalingMode) {
+                    usedScaling = extraComboProperties.newScalingMode;
+                }
+
+                comboStep.scalingEffects = extraComboProperties;
             }
+
+            this.comboSteps.push(comboStep);
 
             comboHits++;
-
-            if (currentMove.nextMove) {
-                currentMove = currentMove.nextMove;
-            }
-
-            else return {
-                totalDamage,
-                steps: this.comboSteps
-            };
+            currentMove = currentMove.nextMove;
         }
+
+        return {
+            totalDamage,
+            steps: this.comboSteps
+        };
     }
 
     getScalingCap(perfectParry: boolean) {

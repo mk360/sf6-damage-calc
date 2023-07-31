@@ -12,8 +12,9 @@ class Move {
     damage: number | DamageLevels;
     afterExecution?({ usedScaling, scalingPenalty, nextMove, previousMove, comboHits }: AfterMoveExecutionArgs): {
         extraHits?: number;
-        scaling?: number;
-    };
+        extraScaling?: number;
+        newScalingMode?: number[];
+    } | undefined;
     nextMove: Move | null;
     constructor(input: string, type: MoveType, damage: number | DamageLevels, version?: "light" | "medium" | "heavy" | "overdrive") {
         this.input = input;
@@ -22,7 +23,7 @@ class Move {
         this.nextMove = null;
         this.previousMove = null;
         this.grounded = this.type === "normal" && !this.input.startsWith("j.");
-        if (this.type === "special") {
+        if (this.type === "special" && version) {
             this.strength = version;
             this.damage = (this.damage as DamageLevels)[this.strength];
         } else if (this.type === "normal") {

@@ -9,27 +9,24 @@ import Combo from "@/logic/combo";
 import * as Characters from "@/data/characters";
 import shortid from "shortid";
 import ComboMove from "./combo-move";
-import { IComboMove, ISpecialMove } from "../../types/combo-move-interface";
+import { IComboMove, ISpecialMove } from "../../../types/combo-move-interface";
 import MoveCancelIndicator from "./move-cancel-indicator";
 import Move from "@/logic/move";
 import ComboStep from "@/logic/types/combo-step";
-import getInputWithStrength from "@/app/utils/get-input-with-strength";
-import MoveStrength from "@/app/types/move-strength";
+import getInputWithStrength from "@/utils/get-input-with-strength";
+import MoveStrength from "@/types/move-strength";
 import MoveType from "@/logic/types/move-type";
-
-function getMoveDisplay(input: string, strength: "light" | "medium" | "heavy" | "overdrive") {
-    const [attackButton] = input.match(/[PK]+/)!;
-    return input.replace(attackButton, (strength === "overdrive" ? attackButton : strength[0].toUpperCase()) + attackButton);
-}
+import DriveRushButton from "./drive-rush-button";
+import explainStep from "@/logic/get-step-explanation";
 
 function CharacterPage({ params: { character } }: { params: { character: keyof typeof Characters } }) {
     const x = Movesets[character as keyof typeof Movesets];
     const [comboMoves, setCombo] = useState<Array<IComboMove | ISpecialMove>>([]);
-    const [comboContext, setComboContext] = useState("");
+    const [comboContext, setComboContext] = useState("regular");
     const [comboResult, setComboResult] = useState<{
         totalDamage: number;
-        comboSteps: ComboStep[]
-    }>({ totalDamage: 0, comboSteps: [] });
+        steps: ComboStep[];
+    }>({ totalDamage: 0, steps: [] });
 
     function addComboMove(move: Omit<IComboMove, "id" >) {
         const moveCopy: IComboMove = {...move, id: shortid() };
@@ -54,7 +51,7 @@ function CharacterPage({ params: { character } }: { params: { character: keyof t
     };
 
     return (
-        <div>
+        <>
             <fieldset>
                 <legend>Combo Start</legend>
                 <div className={style["combo-contexts"]}>
@@ -108,11 +105,15 @@ function CharacterPage({ params: { character } }: { params: { character: keyof t
             ))}
 
             <h3>Global Mechanics</h3>
-            <button>Drive Rush</button>
-            <button>Drive Impact</button>
+            <DriveRushButton addMove={() => {
+                setCombo((comboMoves) => [...comboMoves, {
+                    type: "drive-rush",
+                    input: "66",
+                    id: shortid()
+                }])
+            }} />
 
             <div className={style["combo-area"]}>
-                
                 {comboMoves.map((move, index) => (
                     <>
                         <ComboMove {...move} index={index} key={move.id} onRemove={removeMove} />
@@ -128,7 +129,7 @@ function CharacterPage({ params: { character } }: { params: { character: keyof t
                     for (let move of comboMoves) {
                         const inputWithStrength = getInputWithStrength(move.input, move.type === "special" ? move.version : "overdrive");
                         const moveData = moveset[move.type][move.input];
-                        const moveClass = new Move(inputWithStrength, move.type, moveData.damage, move.type === "special" && move.version || "heavy");
+                        const moveClass = new Move(move.type === "special" ? inputWithStrength : move.input, move.type, moveData.damage, move.type === "special" && move.version || "heavy");
                         moveClass.afterExecution = moveData.afterExecution;
                         combo.addMove(moveClass, move.cancelled);
                     }
@@ -137,11 +138,26 @@ function CharacterPage({ params: { character } }: { params: { character: keyof t
                         perfectParry: comboContext === "perfect-parry",
                         isCounter: comboContext === "punish-counter"
                     });
+
+                    setComboResult(comboData);
                 }}>
                     Compute Combo
                 </button>
             </div>
-        </div>
+            <div>
+                {!!comboResult.steps.length && (<>
+                    {comboResult.steps.map((step, i) => {
+                        const stepExplanation = explainStep({ step });
+                        if (step.move === "66") {
+                            return <div>Drive Rush {stepExplanation}</div>
+                        }
+                        return <div key={step.move + "-" + i}>{step.move} - {step.damage} {stepExplanation}</div>
+                    })}
+                    <p>Total Damage: {comboResult.totalDamage}</p>
+                    </>
+                )}
+            </div>
+        </>
     );
 };
 

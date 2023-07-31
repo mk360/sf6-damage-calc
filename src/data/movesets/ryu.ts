@@ -39,7 +39,6 @@ const Moveset: CharacterMoveset = {
         "2HP": {
             type: "normal",
             damage: 800,
-            
         },
         "2LK": {
             type: "normal",
@@ -84,6 +83,11 @@ const Moveset: CharacterMoveset = {
         "6HP": {
             type: "normal",
             damage: 800,
+            afterExecution() {
+                return {
+                    extraHits: 1
+                };
+            }
         },
         "4HP": {
             type: "normal",
@@ -117,7 +121,6 @@ const Moveset: CharacterMoveset = {
                 overdrive: 800
             },
             type: "special",
-            canUseConsumable: true,
         },
         "236K": {
             damage: {
@@ -127,10 +130,12 @@ const Moveset: CharacterMoveset = {
                 overdrive: 800
             },
             type: "special",
-            afterExecution(this: Move) {
-                return {
-                    scaling: 10
-                };
+            afterExecution(this: Move, { comboHits }) {
+                if (comboHits === 1) {
+                    return {
+                        extraScaling: 10,
+                    };
+                }
             },
         },
         "214K": {
@@ -150,7 +155,6 @@ const Moveset: CharacterMoveset = {
                 overdrive: 900
             },
             type: "special",
-            canUseConsumable: true,
         },
         "623P": {
             damage: {
@@ -166,13 +170,11 @@ const Moveset: CharacterMoveset = {
         "236236P": {
             damage: 2000,
             type: "super1",
-            canUseConsumable: true
         },
     },
     super2: {
         "214214P": {
             damage: 3000,
-            canUseConsumable: true,
             type: "super2"
         },
     },
