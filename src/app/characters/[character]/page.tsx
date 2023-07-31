@@ -149,7 +149,7 @@ function CharacterPage({ params: { character } }: { params: { character: keyof t
                     {comboResult.steps.map((step, i) => {
                         const stepExplanation = explainStep({ step });
                         if (step.move === "66") {
-                            return <div>Drive Rush {stepExplanation}</div>
+                            return <div key={step.move + "-" + i}>Drive Rush {stepExplanation}</div>
                         }
                         return <div key={step.move + "-" + i}>{step.move} - {step.damage} {stepExplanation}</div>
                     })}

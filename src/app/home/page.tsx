@@ -18,7 +18,7 @@ function createCharacterSelectors(setter: (s: string) => void) {
     <div key={i} className={styles[`character-row-${i + 1}`]}>
       {row.map(character => {
         if (!character) return <div />;
-        return <CharacterSlot setter={setter} name={character} />
+        return <CharacterSlot key={character} setter={setter} name={character} />
       })}
     </div>
   ));
@@ -30,7 +30,7 @@ export default function Home() {
       <div className={styles["main-grid"]}>
         <div className={styles["character-portrait"]}>
           {character && (
-          <Image width={180} height={600} alt={character} lang='en' aria-labelledby={character} src={`/portraits/${character}.png`} />
+          <img width="100%" height="100%" alt={character} lang='en' aria-labelledby={character} src={`/portraits/${character}.png`} />
           )}
         </div>
         <div className={styles["character-select"]}>

@@ -3,6 +3,7 @@
 .character-selector {
     @include Font;
     font-size: 30px;
+    text-align: center;
     flex: 1;
     background-color: black;
     padding: 8px;
