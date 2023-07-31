@@ -1,6 +1,5 @@
 "use client";
 
-import Image from 'next/image'
 import { useState } from 'react'
 import styles from "./style.module.scss";
 import CharacterSlot from '@/components/character-slot';

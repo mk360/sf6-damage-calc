@@ -13,4 +13,8 @@
         color: $orange;
         text-decoration: none;
     }
+
+    &.wip {
+        opacity: 0.7;
+    }
 }

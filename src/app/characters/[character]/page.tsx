@@ -20,7 +20,7 @@ import DriveRushButton from "./drive-rush-button";
 import explainStep from "@/logic/get-step-explanation";
 
 function CharacterPage({ params: { character } }: { params: { character: keyof typeof Characters } }) {
-    const x = Movesets[character as keyof typeof Movesets];
+    const characterMoveset = Movesets[character];
     const [comboMoves, setCombo] = useState<Array<IComboMove | ISpecialMove>>([]);
     const [comboContext, setComboContext] = useState("regular");
     const [comboResult, setComboResult] = useState<{
@@ -73,18 +73,18 @@ function CharacterPage({ params: { character } }: { params: { character: keyof t
             </fieldset>
            
             <h3>Normals</h3>
-            {Object.entries(x.normal).map(([moveInput, move]) => (
+            {Object.entries(characterMoveset.normal).map(([moveInput, move]) => (
                 <MoveButton onClick={addComboMove} key={moveInput} name={moveInput} type="normal" />
             ))}
 
             <h3>Target Combos</h3>
-            {Object.entries(x["target-combo"]).map(([moveInput, move]) => (
+            {Object.entries(characterMoveset["target-combo"]).map(([moveInput, move]) => (
                 <MoveButton type="target-combo" onClick={addComboMove} key={moveInput} name={moveInput} />
             ))}
 
             <h3>Specials</h3>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {Object.entries(x["special"]).map(([moveInput]) => (
+                {Object.entries(characterMoveset["special"]).map(([moveInput]) => (
                     <SpecialButton onClick={(input, strength) => {
                         addSpecialMove({
                             input,
@@ -95,12 +95,12 @@ function CharacterPage({ params: { character } }: { params: { character: keyof t
             </div>
 
             <h3>Throws</h3>
-            {Object.entries(x["throw"]).map(([moveInput, move]) => (
+            {Object.entries(characterMoveset["throw"]).map(([moveInput, move]) => (
                 <MoveButton type="throw" onClick={addComboMove} key={moveInput} name={moveInput} />
             ))}
 
             <h3>Supers</h3>
-            {Object.entries({...x.super1, ...x.super2, ...x.super3 }).map(([moveInput, move]) => (
+            {Object.entries({...characterMoveset.super1, ...characterMoveset.super2, ...characterMoveset.super3 }).map(([moveInput, move]) => (
                 <MoveButton type={move.type as Exclude<MoveType, "special">} name={moveInput} onClick={addComboMove} key={moveInput} />
             ))}
 
@@ -159,6 +159,16 @@ function CharacterPage({ params: { character } }: { params: { character: keyof t
             </div>
         </>
     );
+};
+
+export function getStaticPaths() {
+    return {
+        paths: [{
+            params: {
+                character: "ryu"
+            }
+        }],
+    }
 };
 
 export default CharacterPage;

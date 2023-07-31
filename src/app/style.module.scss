@@ -1,15 +1,10 @@
-@import "../../theme.scss";
+@import "../theme.scss";
 
 .main-grid {
     background-color: $orange;
     @include Font;
     text-align: center;
     font-size: 3rem;
-    // display: grid;
-    // grid-template-columns: repeat(5, 1fr);
-    // grid-template-rows: repeat(2, 1fr);
-    // grid-column-gap: 0px;
-    // grid-row-gap: 30px;
 }
 
 $row-gap: 20px;

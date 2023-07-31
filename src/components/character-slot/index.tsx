@@ -9,7 +9,7 @@ function CharacterSlot({
     name: string;
     setter: (s: string) => void;
 }) {
-    if (available.includes("Ryu")) {
+    if (available.includes(name)) {
         return <a onMouseEnter={() => {
             setter(name);
         }} href={`/characters/${name.toLowerCase().replace(/[\s.]+/g, "")}`} className={style["character-selector"]}>{name}</a>;
