@@ -9,7 +9,7 @@
     padding: 8px;
     display: block;
 
-    &:hover {
+    &:not(.wip):hover {
         color: $orange;
         text-decoration: none;
     }

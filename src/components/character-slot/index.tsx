@@ -1,5 +1,7 @@
 import style from "./style.module.scss";
 
+const available = ["Ryu"];
+
 function CharacterSlot({
     name,
     setter
@@ -7,9 +9,13 @@ function CharacterSlot({
     name: string;
     setter: (s: string) => void;
 }) {
-    return <a onMouseEnter={() => {
-        setter(name);
-    }} href={`/characters/${name.toLowerCase().replace(/[\s.]+/g, "")}`} className={style["character-selector"]}>{name}</a>
+    if (available.includes("Ryu")) {
+        return <a onMouseEnter={() => {
+            setter(name);
+        }} href={`/characters/${name.toLowerCase().replace(/[\s.]+/g, "")}`} className={style["character-selector"]}>{name}</a>;
+    }
+
+    return <div className={style["character-selector"] + " " + style["wip"]}>{name}</div>;
 };
 
 export default CharacterSlot;
